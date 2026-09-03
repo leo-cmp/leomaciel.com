@@ -38,6 +38,7 @@ if (!empty($pathInfo)) {
                 }
             }
         }
+    }
 }
 
 // Se não houver hash na rota, gera um hash aleatório de 6 caracteres no PHP
