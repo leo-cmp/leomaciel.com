@@ -1,0 +1,7 @@
+.env
+sessions.php
+test_api.php
+.DS_Store
+.idea/
+.vscode/
+*.log

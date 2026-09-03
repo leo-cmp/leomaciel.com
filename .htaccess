@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Se o arquivo ou pasta física existir no diretório, serve diretamente
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Caso contrário, redireciona amigavelmente para o index.php mantendo o PATH_INFO
+    RewriteRule ^(.*)$ index.php/$1 [L]
+</IfModule>
