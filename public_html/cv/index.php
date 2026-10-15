@@ -62,8 +62,8 @@ if (empty($routeHash)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Currículo Profissional de Leonardo Camargos Maciel da Purificação - Engenheiro de Software & Especialista PHP (CodeIgniter)">
-    <title>Leonardo Maciel | Engenheiro de Software & Especialista PHP</title>
+    <meta name="description" content="Currículo Profissional de Leonardo Camargos Maciel da Purificação - Software Engineer & Especialista PHP (CodeIgniter)">
+    <title>Leonardo Maciel | Software Engineer & Especialista PHP</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,7 +101,7 @@ if (empty($routeHash)) {
         <header class="resume-header">
             <div class="header-main">
                 <h1 class="name">Leonardo Camargos Maciel da Purificação</h1>
-                <h2 class="title">Engenheiro de Software & Specialist PHP <span class="location-header">— Matozinhos / MG</span></h2>
+                <h2 class="title">Software Engineer & Especialista PHP <span class="location-header">— Matozinhos / MG</span></h2>
                 <p class="subtitle">15 anos de experiência prática transformando requisitos de negócio em sistemas robustos de produção.</p>
             </div>
             <div class="contact-grid">
