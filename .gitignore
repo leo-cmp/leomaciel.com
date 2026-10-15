@@ -5,3 +5,4 @@ test_api.php
 .idea/
 .vscode/
 *.log
+error_log
