@@ -1,12 +1,13 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /cv/
 
     # Remove index.php explicitamente da URL
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+/)?index\.php/([^\s\?]+) [NC]
-    RewriteRule ^index\.php/(.*)$ $1 [R=301,L]
+    RewriteRule ^index\.php/(.*)$ /cv/$1 [R=301,L]
 
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+/)?index\.php/?(\?[^\s]*)?\s [NC]
-    RewriteRule ^index\.php$ ./ [R=301,L]
+    RewriteRule ^index\.php$ /cv/ [R=301,L]
 
     # Se o arquivo ou pasta física existir no diretório, serve diretamente
     RewriteCond %{REQUEST_FILENAME} !-f
