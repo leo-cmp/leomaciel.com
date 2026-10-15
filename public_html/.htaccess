@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redireciona requisições diretas com index.php para a raiz limpa
+    # Ex: leomaciel.com/index.php -> leomaciel.com/
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+index\.php/?(\?[^\s]*)?\s [NC]
+    RewriteRule ^index\.php$ / [R=301,L]
+
+    # Ex: leomaciel.com/qualquer/index.php/rota -> leomaciel.com/qualquer/rota
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+)/index\.php/([^\s\?]+) [NC]
+    RewriteRule ^(.+)/index\.php/(.*)$ /$1/$2 [R=301,L]
+
+    # Ex: leomaciel.com/qualquer/index.php -> leomaciel.com/qualquer/
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+)/index\.php/?(\?[^\s]*)?\s [NC]
+    RewriteRule ^(.+)/index\.php$ /$1/ [R=301,L]
+</IfModule>
