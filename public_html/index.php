@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leo Maciel | Desenvolvedor & Projetos</title>
-    <meta name="description" content="Software Engineer & Desenvolvedor Web. Conecte-se comigo e conheça meus projetos e parcerias.">
+    <meta name="description" content="Software Engineer & Especialista PHP. Conecte-se comigo e conheça meus projetos e parcerias.">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +66,7 @@
                 </div>
             </div>
             <h1 class="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-base-content">Leo Maciel</h1>
-            <p class="text-sm sm:text-base text-base-content/70 font-medium mt-1">Software Engineer & Desenvolvedor Web</p>
+            <p class="text-sm sm:text-base text-base-content/70 font-medium mt-1">Software Engineer & Especialista PHP</p>
             <div class="flex gap-2 mt-3">
                 <span class="badge badge-sm badge-neutral gap-1.5 py-2.5 px-3">
                     <span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
