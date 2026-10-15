@@ -143,7 +143,7 @@ if (empty($routeHash)) {
                         <div class="timeline-item">
                             <div class="timeline-header">
                                 <h4 class="role">Desenvolvedor PHP & DevOps</h4>
-                                <span class="period">2021 — Presente</span>
+                                <span class="period">2021 — 2026</span>
                             </div>
                             <h5 class="company">i3Tech / Brasil Plataformas</h5>
                             <p class="job-description">
