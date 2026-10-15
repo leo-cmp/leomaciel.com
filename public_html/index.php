@@ -60,9 +60,9 @@
         
         <!-- Avatar / Header -->
         <header class="text-center mb-8 flex flex-col items-center">
-            <div class="avatar placeholder mb-4">
-                <div class="w-24 h-24 rounded-full ring-2 ring-primary/40 ring-offset-base-300 ring-offset-4 bg-gradient-to-tr from-primary/30 to-secondary/30 text-primary-content shadow-2xl flex items-center justify-center">
-                    <span class="text-3xl font-bold font-heading text-primary">LM</span>
+            <div class="avatar mb-4">
+                <div class="w-24 h-24 rounded-full ring-2 ring-primary/40 ring-offset-base-300 ring-offset-4 shadow-2xl overflow-hidden">
+                    <img src="/avatar.jpg" alt="Leo Maciel" class="w-full h-full object-cover" />
                 </div>
             </div>
             <h1 class="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-base-content">Leo Maciel</h1>
