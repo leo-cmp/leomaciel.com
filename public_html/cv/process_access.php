@@ -3,7 +3,7 @@
  * PROCESS ACCESS - VALIDAÇÃO E DISPARO DE MENSAGEM VIA EVOLUTION API
  */
 
-require_once __DIR__ . '/config.php';
+require_once dirname(__DIR__, 2) . '/config.php';
 
 // Configuração de Cabeçalhos CORS e Segurança
 $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';

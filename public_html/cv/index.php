@@ -3,7 +3,7 @@
  * CURRÍCULO PORTFÓLIO LEONARDO MACIEL - CONTROLLER & VIEW
  */
 
-require_once __DIR__ . '/config.php';
+require_once dirname(__DIR__, 2) . '/config.php';
 
 // Define o diretório base dinamicamente para suportar execução em subpastas (como /cv)
 $baseDir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
