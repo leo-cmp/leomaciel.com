@@ -129,6 +129,21 @@
             <!-- Divisor: Parcerias -->
             <div class="divider text-xs font-semibold text-base-content/40 uppercase tracking-wider my-2">Parcerias & Projetos</div>
 
+            <!-- Dizit -->
+            <a href="https://dizit.app" target="_blank" rel="noopener noreferrer" class="link-card glass-panel w-full p-4 rounded-2xl flex items-center justify-between group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-[#3a86ff]/10 text-[#3a86ff] flex items-center justify-center text-xl group-hover:bg-[#3a86ff] group-hover:text-white transition-colors duration-200">
+                        <i class="fa-solid fa-laptop-code"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="font-semibold text-sm sm:text-base group-hover:text-primary transition-colors">Dizit</div>
+                        <div class="text-xs text-base-content/50">Sistemas para Empresas</div>
+                    </div>
+                </div>
+                <div class="badge badge-sm badge-ghost font-medium text-xs gap-1 group-hover:badge-info transition-colors">
+                    Conhecer <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </div>
+            </a>
 
             <!-- Power Criativa -->
             <a href="https://powercriativa.com.br" target="_blank" rel="noopener noreferrer" class="link-card glass-panel w-full p-4 rounded-2xl flex items-center justify-between group">
