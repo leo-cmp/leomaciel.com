@@ -20,8 +20,13 @@ if (!empty($pathInfo)) {
     $parts = explode('/', $pathInfo);
     if (count($parts) >= 1) {
         $routeHash = $parts[0];
+        
+        // Se a rota usar o código master, libera o acesso imediatamente
+        if (defined('MASTER_CODE') && MASTER_CODE !== '' && $routeHash === MASTER_CODE) {
+            $accessGranted = true;
+        }
     }
-    if (count($parts) >= 2) {
+    if (!$accessGranted && count($parts) >= 2) {
         $routePhone = $parts[1];
         
         // Verifica se existe o registro correspondente no sessions.php
@@ -74,6 +79,7 @@ if (empty($routeHash)) {
         const ACCESS_GRANTED_FROM_SERVER = <?php echo $accessGranted ? 'true' : 'false'; ?>;
         const ROUTE_HASH = "<?php echo htmlspecialchars($routeHash, ENT_QUOTES, 'UTF-8'); ?>";
         const ROUTE_PHONE = "<?php echo htmlspecialchars($routePhone, ENT_QUOTES, 'UTF-8'); ?>";
+        const MASTER_CODE = "<?php echo defined('MASTER_CODE') ? htmlspecialchars(MASTER_CODE, ENT_QUOTES, 'UTF-8') : ''; ?>";
     </script>
 </head>
 <body>
@@ -128,10 +134,10 @@ if (empty($routeHash)) {
                 <section class="section" id="perfil">
                     <h3 class="section-title"><i class="fa-solid fa-user-tie"></i> Resumo Profissional</h3>
                     <p class="text-block">
-                        Desenvolvedor de software com <strong>mais de 15 anos de trajetória prática</strong> no desenvolvimento web, especializado no ecossistema <strong>PHP</strong> e framework <strong>CodeIgniter (2, 3 e 4)</strong>. Ao longo da minha carreira, atuei desde a concepção solo de sistemas complexos (como CRMs e portais de alta escala) até o trabalho integrado em equipes ágeis com fluxos de CI/CD modernos.
+                        Desenvolvedor de software com <strong>mais de 15 anos de trajetória prática</strong> no desenvolvimento web, especializado no ecossistema <strong>PHP</strong> e framework <strong>CodeIgniter (2, 3 e 4)</strong>. Foco em projetar e implementar sistemas sob medida para <strong>substituir planilhas e controles manuais</strong>, eliminando gargalos operacionais através de <strong>automações, trilhas de auditoria e integrações com Inteligência Artificial (APIs de LLMs, agentes e processamento inteligente)</strong>.
                     </p>
                     <p class="text-block">
-                        Atualmente, estou <strong>cursando Engenharia de Software</strong> para solidificar e chancelar academicamente minha vasta vivência de mercado. Meu objetivo é unir a agilidade de entrega que desenvolvi na prática ao rigor teórico científico de engenharia, aprofundando-me em <strong>padrões de projeto (Design Patterns), arquitetura limpa (SOLID) e testes automatizados</strong>, elevando a qualidade e a governança de software nos times em que atuo.
+                        Ao longo da carreira, atuei desde a concepção solo de arquiteturas complexas (como CRMs e portais de alta escala) até o trabalho integrado em equipes ágeis com fluxos modernos de CI/CD. Atualmente, estou <strong>cursando Engenharia de Software</strong> para unir a agilidade de entrega que desenvolvi na prática ao rigor teórico científico de engenharia, aprofundando-me em <strong>padrões de projeto (Design Patterns), arquitetura limpa (SOLID) e testes automatizados</strong>.
                     </p>
                 </section>
 
@@ -307,6 +313,7 @@ if (empty($routeHash)) {
                             <li>CodeIgniter 4 <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
                             <li>REST APIs / Integrações <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
                             <li>CodeIgniter 2 / 3 <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></span></li>
+                            <li>Node.js <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i><i class="fa-regular fa-star"></i></span></li>
                         </ul>
                     </div>
 
@@ -314,7 +321,7 @@ if (empty($routeHash)) {
                         <h5>Bancos de Dados</h5>
                         <ul class="skills-list">
                             <li>MySQL / MariaDB <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
-                            <li>PostgreSQL (Projetos Pontuais) <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i></span></li>
+                            <li>PostgreSQL <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i><i class="fa-regular fa-star"></i></span></li>
                         </ul>
                     </div>
 
@@ -329,14 +336,23 @@ if (empty($routeHash)) {
                     </div>
 
                     <div class="skills-category">
+                        <h5>Integrações, Automação & IA</h5>
+                        <ul class="skills-list">
+                            <li>APIs de IA (OpenAI, Gemini, Claude) <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></span></li>
+                            <li>Automação de Processos & Webhooks <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
+                            <li>APIs de Mensageria / WhatsApp <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
+                        </ul>
+                    </div>
+
+                    <div class="skills-category">
                         <h5>Front-end</h5>
                         <ul class="skills-list">
                             <li>HTML5 / CSS3 / Vanilla JS <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
                             <li>Bootstrap <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
                             <li>Tailwind CSS <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></span></li>
                             <li>jQuery <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></li>
-                            <li>HTMX <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i><i class="fa-regular fa-star"></i></span></li>
-                            <li>Alpine.js / React / Vue / Angular <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i></span></li>
+                            <li>HTMX / Alpine.js <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i><i class="fa-regular fa-star"></i></span></li>
+                            <li>React / Vue / Angular (Revisão & IA) <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i></span></li>
                         </ul>
                     </div>
                 </section>
@@ -346,8 +362,12 @@ if (empty($routeHash)) {
                     <h3 class="section-title"><i class="fa-solid fa-diagram-project"></i> Práticas & Processos</h3>
                     <div class="methodology-grid">
                         <div class="methodology-card">
-                            <h6>Desenvolvimento Assistido por IA</h6>
-                            <p>Uso avançado de assistentes de IA em linha de comando (<strong>Claude Code</strong>, <strong>Gemini CLI</strong>, <strong>Antigravity CLI</strong>, <strong>Codex CLI</strong>) integrados diretamente ao workflow de terminal Linux. Foco em aceleração de produtividade, geração rápida de testes, refatoração de código e alavancagem no domínio ágil de novas stacks front-end.</p>
+                            <h6>Sistemas & Otimização Operacional</h6>
+                            <p>Mapeamento de gargalos operacionais e desenvolvimento de sistemas web para <strong>substituir planilhas e processos manuais</strong>. Implementação de regras de negócio complexas, relatórios gerenciais, automações via webhooks e trilhas de auditoria para integridade e compliance.</p>
+                        </div>
+                        <div class="methodology-card">
+                            <h6>Inteligência Artificial (Soluções & Fluxo)</h6>
+                            <p><strong>Em Soluções:</strong> Integração de APIs de LLMs (OpenAI, Gemini, Claude) e agentes autônomos para automação, análise inteligente de dados e apoio à tomada de decisão. <strong>No Desenvolvimento:</strong> Uso avançado de assistentes de IA no terminal Linux (Claude Code, Gemini CLI, Antigravity) para acelerar entregas com alta produtividade.</p>
                         </div>
                         <div class="methodology-card">
                             <h6>Metodologias Ágeis</h6>
@@ -368,12 +388,12 @@ if (empty($routeHash)) {
 
         <!-- RODAPÉ DA PÁGINA (Apenas Web) -->
         <footer class="resume-footer">
-            <p>Este currículo foi desenvolvido com HTML5, CSS3 moderno e JS Vanilla. Pressione <strong>Ctrl + P</strong> ou clique no botão de PDF no topo para salvar a versão física A4.</p>
+            <p>Este currículo foi desenvolvido com <strong>PHP</strong>, HTML5, CSS3 moderno e JS Vanilla. Pressione <strong>Ctrl + P</strong> ou clique no botão de PDF no topo para salvar a versão física A4.</p>
         </footer>
 
         <!-- RODAPÉ EXCLUSIVO PARA IMPRESSÃO -->
         <footer class="print-only-footer">
-            <p>Para visualizar online acesse: <strong id="printFooterLink">leomaciel.com/cv/<span id="cvHash"><?php echo htmlspecialchars($routeHash, ENT_QUOTES, 'UTF-8'); ?></span></strong></p>
+            <p>Para visualizar online acesse: <strong id="printFooterLink">leomaciel.com/cv/<?php if (!defined('MASTER_CODE') || $routeHash !== MASTER_CODE): ?><span id="cvHash"><?php echo htmlspecialchars($routeHash, ENT_QUOTES, 'UTF-8'); ?></span><?php endif; ?></strong></p>
         </footer>
     </div>
 

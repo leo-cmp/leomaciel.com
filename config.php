@@ -33,6 +33,9 @@ define('EVOLUTION_API_KEY', getenv('EVOLUTION_API_KEY') ?: '');
 // Nome da Instância do WhatsApp criada na Evolution API
 define('EVOLUTION_INSTANCE', getenv('EVOLUTION_INSTANCE') ?: 'LeoMaciel');
 
+// Código mestre fixo para acesso administrativo e impressão de PDF limpo
+define('MASTER_CODE', getenv('MASTER_CODE') ?: '130490');
+
 // Caminho do arquivo de persistência local das sessões
 define('SESSIONS_FILE', __DIR__ . '/sessions.php');
 

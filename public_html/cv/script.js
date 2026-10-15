@@ -69,10 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    // Exibe o Easter Egg no console usando o hash injetado pelo PHP
+    // Exibe o Easter Egg no console usando o hash injetado pelo PHP (oculta se for o código master)
     if (typeof ROUTE_HASH !== 'undefined' && ROUTE_HASH !== '') {
-        logDeveloperEasterEgg(ROUTE_HASH);
-        if (cvHashElement) cvHashElement.textContent = ROUTE_HASH;
+        const isMasterRoute = (typeof MASTER_CODE !== 'undefined' && MASTER_CODE !== '' && ROUTE_HASH === MASTER_CODE);
+        if (!isMasterRoute) {
+            logDeveloperEasterEgg(ROUTE_HASH);
+            if (cvHashElement) cvHashElement.textContent = ROUTE_HASH;
+        }
     }
 
     // 4. SISTEMA DE CONTROLE DE ACESSO POR WHATSAPP (OVERLAY & BLOQUEIO OTP)
@@ -114,11 +117,22 @@ document.addEventListener('DOMContentLoaded', () => {
             accessOverlay.classList.add('hidden');
         }
 
-        // Atualiza o link do rodapé de impressão para incluir hash e telefone
+        // Atualiza o link do rodapé de impressão para incluir hash e telefone (ou link limpo se for master)
         if (printFooterLink) {
             // Calcula o host com o diretório base
             const hostPath = window.location.host + BASE_DIR;
-            printFooterLink.innerHTML = `${hostPath}/${hash}/${phone}`;
+            const isMaster = (typeof MASTER_CODE !== 'undefined' && MASTER_CODE !== '' && hash === MASTER_CODE);
+            
+            if (isMaster) {
+                // Código mestre: link 100% limpo no PDF, sem hash nem telefone
+                printFooterLink.innerHTML = `${hostPath}/`;
+            } else if (phone) {
+                printFooterLink.innerHTML = `${hostPath}/${hash}/${phone}`;
+            } else if (hash) {
+                printFooterLink.innerHTML = `${hostPath}/${hash}`;
+            } else {
+                printFooterLink.innerHTML = `${hostPath}/`;
+            }
         }
     }
 
@@ -133,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Decisão de Desbloqueio baseada no Servidor PHP ou cache do LocalStorage
     if (typeof ACCESS_GRANTED_FROM_SERVER !== 'undefined' && ACCESS_GRANTED_FROM_SERVER === true) {
-        // Usuário acessou o link amigável index.php/HASH/TELEFONE
+        // Usuário acessou com rota autorizada pelo PHP
         localStorage.setItem('cv_access', JSON.stringify({
             hash: ROUTE_HASH,
             phone: ROUTE_PHONE,
@@ -147,12 +161,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedAccess) {
             try {
                 const accessData = JSON.parse(savedAccess);
-                if (accessData && accessData.hash && accessData.phone) {
-                    // Se o hash na URL for diferente do hash da sessão salva, invalida a sessão local
-                    if (typeof ROUTE_HASH !== 'undefined' && ROUTE_HASH !== '' && accessData.hash !== ROUTE_HASH) {
-                        localStorage.removeItem('cv_access');
-                    } else {
-                        grantAccess(accessData.hash, accessData.phone);
+                if (accessData && accessData.hash) {
+                    const isSavedMaster = (typeof MASTER_CODE !== 'undefined' && MASTER_CODE !== '' && accessData.hash === MASTER_CODE);
+                    if (isSavedMaster) {
+                        grantAccess(accessData.hash, '');
+                    } else if (accessData.phone) {
+                        // Se o hash na URL for diferente do hash da sessão salva, invalida a sessão local
+                        if (typeof ROUTE_HASH !== 'undefined' && ROUTE_HASH !== '' && accessData.hash !== ROUTE_HASH) {
+                            localStorage.removeItem('cv_access');
+                        } else {
+                            grantAccess(accessData.hash, accessData.phone);
+                        }
                     }
                 }
             } catch (e) {
@@ -356,8 +375,10 @@ document.addEventListener('DOMContentLoaded', () => {
         accessMessage.className = 'access-message';
         accessMessage.style.display = 'none';
 
-        // Compara com o hash aleatório salvo localmente no localStorage
-        if (enteredCode === currentHash) {
+        // Compara com o hash aleatório da rota ou com o código master
+        const isMaster = (typeof MASTER_CODE !== 'undefined' && MASTER_CODE !== '' && enteredCode === MASTER_CODE);
+
+        if (enteredCode === currentHash || isMaster) {
             // Sucesso! Modifica ícone para sucesso verde
             if (accessIcon) accessIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #00ff88; filter: drop-shadow(0 0 8px rgba(0,255,136,0.3));"></i>';
             
@@ -371,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Salva credencial autorizada no LocalStorage para visitas futuras
             const accessData = {
                 hash: enteredCode,
-                phone: phoneInput.value,
+                phone: isMaster ? '' : (phoneInput ? phoneInput.value : ''),
                 timestamp: Date.now()
             };
             localStorage.setItem('cv_access', JSON.stringify(accessData));
