@@ -80,31 +80,55 @@ function checkWhatsappNumber($phone, $headers) {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $checkPayload);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
 
         $checkResponse = curl_exec($ch);
         $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
 
-        // Fallback para API v2 se retornar 404 e houver instância definida
-        if ($httpStatus === 404 && defined('EVOLUTION_INSTANCE') && EVOLUTION_INSTANCE) {
-            return checkWhatsappNumberV2($phone, $headers);
+        // Se obteve resposta positiva na Evolution Go
+        if (!$curlError && ($httpStatus === 200 || $httpStatus === 201)) {
+            return [
+                'status' => $httpStatus,
+                'error' => null,
+                'response' => $checkResponse,
+                'url' => $checkUrl,
+                'used_version' => 'go'
+            ];
+        }
+
+        // Fallback para a API antiga (v2) se a Go falhar (não configurada, 401, 404, etc)
+        $fallbackUrl = defined('EVOLUTION_FALLBACK_URL') ? EVOLUTION_FALLBACK_URL : null;
+        if (defined('EVOLUTION_INSTANCE') && EVOLUTION_INSTANCE) {
+            $targetUrl = ($httpStatus === 404 && strpos($checkUrl, 'dizit.app') === false)
+                ? EVOLUTION_API_URL
+                : ($fallbackUrl ?: EVOLUTION_API_URL);
+
+            $v2Result = checkWhatsappNumberV2($phone, $headers, $targetUrl);
+            if (!$v2Result['error'] && ($v2Result['status'] === 200 || $v2Result['status'] === 201)) {
+                $v2Result['used_version'] = 'v2';
+                return $v2Result;
+            }
         }
 
         return [
             'status' => $httpStatus,
             'error' => $curlError,
             'response' => $checkResponse,
-            'url' => $checkUrl
+            'url' => $checkUrl,
+            'used_version' => 'go'
         ];
     }
 
-    return checkWhatsappNumberV2($phone, $headers);
+    $res = checkWhatsappNumberV2($phone, $headers, EVOLUTION_API_URL);
+    $res['used_version'] = 'v2';
+    return $res;
 }
 
-function checkWhatsappNumberV2($phone, $headers) {
-    $checkUrl = rtrim(EVOLUTION_API_URL, '/') . '/chat/whatsappNumbers/' . EVOLUTION_INSTANCE;
+function checkWhatsappNumberV2($phone, $headers, $baseUrl = null) {
+    $baseUrl = $baseUrl ?: EVOLUTION_API_URL;
+    $checkUrl = rtrim($baseUrl, '/') . '/chat/whatsappNumbers/' . EVOLUTION_INSTANCE;
     $checkPayload = json_encode([
         'numbers' => [$phone]
     ]);
@@ -114,7 +138,7 @@ function checkWhatsappNumberV2($phone, $headers) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $checkPayload);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
 
     $checkResponse = curl_exec($ch);
     $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -135,6 +159,7 @@ $httpStatus = $checkResult['status'];
 $curlError = $checkResult['error'];
 $checkResponse = $checkResult['response'];
 $checkUrl = $checkResult['url'];
+$activeVersion = isset($checkResult['used_version']) ? $checkResult['used_version'] : 'go';
 
 if ($curlError) {
     $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
@@ -229,8 +254,8 @@ file_put_contents(SESSIONS_FILE, $outputContent);
 /**
  * Função auxiliar para enviar mensagens de texto via Evolution API (Evolution Go / v2)
  */
-function sendWhatsappMessage($phone, $text, $headers) {
-    $apiType = defined('EVOLUTION_API_TYPE') ? EVOLUTION_API_TYPE : 'go';
+function sendWhatsappMessage($phone, $text, $headers, $preferredVersion = null) {
+    $apiType = $preferredVersion ?: (defined('EVOLUTION_API_TYPE') ? EVOLUTION_API_TYPE : 'go');
     $sendPayload = json_encode([
         'number' => $phone,
         'text' => $text
@@ -238,38 +263,64 @@ function sendWhatsappMessage($phone, $text, $headers) {
 
     if ($apiType === 'go') {
         $sendUrl = rtrim(EVOLUTION_API_URL, '/') . '/send/text';
-    } else {
-        $sendUrl = rtrim(EVOLUTION_API_URL, '/') . '/message/sendText/' . EVOLUTION_INSTANCE;
+        $ch = curl_init($sendUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $sendPayload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+
+        $sendResponse = curl_exec($ch);
+        $sendHttpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErrorSend = curl_error($ch);
+        curl_close($ch);
+
+        // Se teve sucesso, retorna
+        if (!$curlErrorSend && ($sendHttpStatus === 200 || $sendHttpStatus === 201)) {
+            return [
+                'status' => $sendHttpStatus,
+                'error' => null,
+                'response' => $sendResponse,
+                'url' => $sendUrl
+            ];
+        }
+
+        // Fallback para a API antiga (v2) se o envio no Go falhar
+        $fallbackUrl = defined('EVOLUTION_FALLBACK_URL') ? EVOLUTION_FALLBACK_URL : null;
+        if (defined('EVOLUTION_INSTANCE') && EVOLUTION_INSTANCE) {
+            $targetUrl = ($sendHttpStatus === 404 && strpos($sendUrl, 'dizit.app') === false)
+                ? EVOLUTION_API_URL
+                : ($fallbackUrl ?: EVOLUTION_API_URL);
+
+            return sendWhatsappMessageV2($sendPayload, $headers, $targetUrl);
+        }
+
+        return [
+            'status' => $sendHttpStatus,
+            'error' => $curlErrorSend,
+            'response' => $sendResponse,
+            'url' => $sendUrl
+        ];
     }
+
+    return sendWhatsappMessageV2($sendPayload, $headers, EVOLUTION_API_URL);
+}
+
+function sendWhatsappMessageV2($sendPayload, $headers, $baseUrl = null) {
+    $baseUrl = $baseUrl ?: EVOLUTION_API_URL;
+    $sendUrl = rtrim($baseUrl, '/') . '/message/sendText/' . EVOLUTION_INSTANCE;
 
     $ch = curl_init($sendUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $sendPayload);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
 
     $sendResponse = curl_exec($ch);
     $sendHttpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErrorSend = curl_error($ch);
     curl_close($ch);
-
-    // Fallback para API v2 se retornar 404 e houver instância definida
-    if ($apiType === 'go' && $sendHttpStatus === 404 && defined('EVOLUTION_INSTANCE') && EVOLUTION_INSTANCE) {
-        $sendUrlV2 = rtrim(EVOLUTION_API_URL, '/') . '/message/sendText/' . EVOLUTION_INSTANCE;
-        $ch2 = curl_init($sendUrlV2);
-        curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch2, CURLOPT_POST, true);
-        curl_setopt($ch2, CURLOPT_POSTFIELDS, $sendPayload);
-        curl_setopt($ch2, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
-
-        $sendResponse = curl_exec($ch2);
-        $sendHttpStatus = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-        $curlErrorSend = curl_error($ch2);
-        curl_close($ch2);
-        $sendUrl = $sendUrlV2;
-    }
 
     return [
         'status' => $sendHttpStatus,
@@ -284,22 +335,22 @@ $msg1 = "Olá! 👋\nSeu código de acesso exclusivo para visualizar o meu curr�
 $msg2 = "*{$hash}*";
 $msg3 = "Insira este código na tela de bloqueio do site para liberar a visualização instantaneamente.";
 
-// Envia mensagem 1
-$res1 = sendWhatsappMessage($phone, $msg1, $headers);
+// Envia mensagem 1 (utiliza a mesma versão que teve sucesso na validação)
+$res1 = sendWhatsappMessage($phone, $msg1, $headers, $activeVersion);
 
 if ($res1['status'] === 200 || $res1['status'] === 201) {
     // Espera 1 segundo
     sleep(1);
     
     // Envia mensagem 2 (Código)
-    $res2 = sendWhatsappMessage($phone, $msg2, $headers);
+    $res2 = sendWhatsappMessage($phone, $msg2, $headers, $activeVersion);
     
     if ($res2['status'] === 200 || $res2['status'] === 201) {
         // Espera 0.7 segundos
         usleep(700000);
         
         // Envia mensagem 3
-        $res3 = sendWhatsappMessage($phone, $msg3, $headers);
+        $res3 = sendWhatsappMessage($phone, $msg3, $headers, $activeVersion);
         
         if ($res3['status'] === 200 || $res3['status'] === 201) {
             echo json_encode(['success' => true, 'message' => 'Link de acesso enviado com sucesso para o seu WhatsApp!']);

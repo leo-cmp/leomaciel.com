@@ -27,6 +27,9 @@ if (file_exists(__DIR__ . '/.env')) {
 // URL base da sua API do WhatsApp (Evolution API / Evolution Go)
 define('EVOLUTION_API_URL', getenv('EVOLUTION_API_URL') ?: 'https://whats.api.dizit.app');
 
+// URL de fallback legada (Evolution API v2) caso a Evolution Go não esteja configurada ou responda erro
+define('EVOLUTION_FALLBACK_URL', getenv('EVOLUTION_FALLBACK_URL') ?: 'https://evo2.studiopro.com.br');
+
 // Chave da API / Token da Instância na Evolution Go (apikey)
 define('EVOLUTION_API_KEY', getenv('EVOLUTION_API_KEY') ?: '');
 
@@ -34,7 +37,8 @@ define('EVOLUTION_API_KEY', getenv('EVOLUTION_API_KEY') ?: '');
 define('EVOLUTION_INSTANCE', getenv('EVOLUTION_INSTANCE') ?: 'LeoMaciel');
 
 // Tipo de API: 'go' (Evolution Go - whatsmeow) ou 'v2' (Evolution API v2 - Node)
-define('EVOLUTION_API_TYPE', getenv('EVOLUTION_API_TYPE') ?: 'go');
+// Se não especificado no .env, detecta automaticamente pela URL
+define('EVOLUTION_API_TYPE', getenv('EVOLUTION_API_TYPE') ?: (strpos(EVOLUTION_API_URL, 'dizit.app') !== false ? 'go' : 'v2'));
 
 // Código mestre fixo para acesso administrativo e impressão de PDF limpo
 define('MASTER_CODE', getenv('MASTER_CODE') ?: '130490');
