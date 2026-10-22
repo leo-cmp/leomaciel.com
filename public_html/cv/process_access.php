@@ -1,6 +1,6 @@
 <?php
 /**
- * PROCESS ACCESS - VALIDAÇÃO E DISPARO DE MENSAGEM VIA EVOLUTION API
+ * PROCESS ACCESS - VALIDAÇÃO E DISPARO DE MENSAGEM VIA EVOLUTION API (EVOLUTION GO / V2)
  */
 
 require_once dirname(__DIR__, 2) . '/config.php';
@@ -57,28 +57,84 @@ if (strlen($phone) < 10 || strlen($phone) > 15) {
     exit;
 }
 
-// 2. COMUNICAÇÃO COM A EVOLUTION API - VALIDAR SE O NÚMERO EXISTE NO WHATSAPP
-$checkUrl = rtrim(EVOLUTION_API_URL, '/') . '/chat/whatsappNumbers/' . EVOLUTION_INSTANCE;
 $headers = [
     'Content-Type: application/json',
     'apikey: ' . EVOLUTION_API_KEY
 ];
 
-$checkPayload = json_encode([
-    'numbers' => [$phone]
-]);
+/**
+ * Validação de existência de número no WhatsApp
+ * Compatível com Evolution Go (/user/check) e Evolution API v2 (/chat/whatsappNumbers/{instance})
+ */
+function checkWhatsappNumber($phone, $headers) {
+    $apiType = defined('EVOLUTION_API_TYPE') ? EVOLUTION_API_TYPE : 'go';
 
-$ch = curl_init($checkUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $checkPayload);
-curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    if ($apiType === 'go') {
+        $checkUrl = rtrim(EVOLUTION_API_URL, '/') . '/user/check';
+        $checkPayload = json_encode([
+            'number' => [$phone]
+        ]);
 
-$checkResponse = curl_exec($ch);
-$httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
+        $ch = curl_init($checkUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $checkPayload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $checkResponse = curl_exec($ch);
+        $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        // Fallback para API v2 se retornar 404 e houver instância definida
+        if ($httpStatus === 404 && defined('EVOLUTION_INSTANCE') && EVOLUTION_INSTANCE) {
+            return checkWhatsappNumberV2($phone, $headers);
+        }
+
+        return [
+            'status' => $httpStatus,
+            'error' => $curlError,
+            'response' => $checkResponse,
+            'url' => $checkUrl
+        ];
+    }
+
+    return checkWhatsappNumberV2($phone, $headers);
+}
+
+function checkWhatsappNumberV2($phone, $headers) {
+    $checkUrl = rtrim(EVOLUTION_API_URL, '/') . '/chat/whatsappNumbers/' . EVOLUTION_INSTANCE;
+    $checkPayload = json_encode([
+        'numbers' => [$phone]
+    ]);
+
+    $ch = curl_init($checkUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $checkPayload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+    $checkResponse = curl_exec($ch);
+    $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    return [
+        'status' => $httpStatus,
+        'error' => $curlError,
+        'response' => $checkResponse,
+        'url' => $checkUrl
+    ];
+}
+
+// 2. COMUNICAÇÃO COM A EVOLUTION API - VALIDAR SE O NÚMERO EXISTE NO WHATSAPP
+$checkResult = checkWhatsappNumber($phone, $headers);
+$httpStatus = $checkResult['status'];
+$curlError = $checkResult['error'];
+$checkResponse = $checkResult['response'];
+$checkUrl = $checkResult['url'];
 
 if ($curlError) {
     $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
@@ -98,7 +154,7 @@ if ($httpStatus !== 200 && $httpStatus !== 201) {
     
     $msg = 'Não foi possível conectar ao servidor de validação no momento. Tente novamente mais tarde.';
     if ($isLocal) {
-        $msg = '[DEBUG LOCAL] HTTP Status ' . $httpStatus . ' da API. Resposta Bruta: ' . $checkResponse;
+        $msg = '[DEBUG LOCAL] HTTP Status ' . $httpStatus . ' da API (' . $checkUrl . '). Resposta Bruta: ' . $checkResponse;
     }
     echo json_encode(['success' => false, 'message' => $msg]);
     exit;
@@ -107,15 +163,23 @@ if ($httpStatus !== 200 && $httpStatus !== 201) {
 $checkData = json_decode($checkResponse, true);
 $numberExists = false;
 
-// A API retorna um array de objetos. Verificamos se o primeiro elemento existe e é válido.
-if (is_array($checkData) && isset($checkData[0])) {
+// 1. Formato Evolution GO: {"message": "success", "data": {"Users": [{"IsInWhatsapp": true, ...}]}}
+$users = $checkData['data']['Users'] ?? $checkData['data']['users'] ?? null;
+if (is_array($users) && isset($users[0])) {
+    $user = $users[0];
+    if (!empty($user['IsInWhatsapp']) || !empty($user['isInWhatsapp'])) {
+        $numberExists = true;
+    }
+}
+// 2. Formato Evolution v2 (legado): [{"exists": true, ...}]
+elseif (is_array($checkData) && isset($checkData[0])) {
     if (isset($checkData[0]['exists']) && $checkData[0]['exists'] === true) {
         $numberExists = true;
-        // Pega o JID formatado retornado pela API (caso queira salvar com o JID exato)
-        if (isset($checkData[0]['jid'])) {
-            // Remove o sufixo @s.whatsapp.net para manter apenas o número se preferido, ou mantemos o número limpo
-        }
     }
+}
+// 3. Formato direto: {"exists": true}
+elseif (isset($checkData['exists']) && $checkData['exists'] === true) {
+    $numberExists = true;
 }
 
 if (!$numberExists) {
@@ -162,12 +226,21 @@ $sessions[] = $newSession;
 $outputContent = "<?php die('Acesso restrito'); ?>\n" . json_encode(array_values($sessions), JSON_PRETTY_PRINT);
 file_put_contents(SESSIONS_FILE, $outputContent);
 
-// Função auxiliar para enviar mensagens de texto via Evolution API
-function sendWhatsappMessage($phone, $text, $sendUrl, $headers) {
+/**
+ * Função auxiliar para enviar mensagens de texto via Evolution API (Evolution Go / v2)
+ */
+function sendWhatsappMessage($phone, $text, $headers) {
+    $apiType = defined('EVOLUTION_API_TYPE') ? EVOLUTION_API_TYPE : 'go';
     $sendPayload = json_encode([
         'number' => $phone,
         'text' => $text
     ]);
+
+    if ($apiType === 'go') {
+        $sendUrl = rtrim(EVOLUTION_API_URL, '/') . '/send/text';
+    } else {
+        $sendUrl = rtrim(EVOLUTION_API_URL, '/') . '/message/sendText/' . EVOLUTION_INSTANCE;
+    }
 
     $ch = curl_init($sendUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -181,36 +254,52 @@ function sendWhatsappMessage($phone, $text, $sendUrl, $headers) {
     $curlErrorSend = curl_error($ch);
     curl_close($ch);
 
+    // Fallback para API v2 se retornar 404 e houver instância definida
+    if ($apiType === 'go' && $sendHttpStatus === 404 && defined('EVOLUTION_INSTANCE') && EVOLUTION_INSTANCE) {
+        $sendUrlV2 = rtrim(EVOLUTION_API_URL, '/') . '/message/sendText/' . EVOLUTION_INSTANCE;
+        $ch2 = curl_init($sendUrlV2);
+        curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch2, CURLOPT_POST, true);
+        curl_setopt($ch2, CURLOPT_POSTFIELDS, $sendPayload);
+        curl_setopt($ch2, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
+
+        $sendResponse = curl_exec($ch2);
+        $sendHttpStatus = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+        $curlErrorSend = curl_error($ch2);
+        curl_close($ch2);
+        $sendUrl = $sendUrlV2;
+    }
+
     return [
         'status' => $sendHttpStatus,
         'error' => $curlErrorSend,
-        'response' => $sendResponse
+        'response' => $sendResponse,
+        'url' => $sendUrl
     ];
 }
 
 // 4. DISPARAR AS MENSAGENS COM O CÓDIGO OTP DE ACESSO
-$sendUrl = rtrim(EVOLUTION_API_URL, '/') . '/message/sendText/' . EVOLUTION_INSTANCE;
-
 $msg1 = "Olá! 👋\nSeu código de acesso exclusivo para visualizar o meu currículo online é:";
 $msg2 = "*{$hash}*";
 $msg3 = "Insira este código na tela de bloqueio do site para liberar a visualização instantaneamente.";
 
 // Envia mensagem 1
-$res1 = sendWhatsappMessage($phone, $msg1, $sendUrl, $headers);
+$res1 = sendWhatsappMessage($phone, $msg1, $headers);
 
 if ($res1['status'] === 200 || $res1['status'] === 201) {
     // Espera 1 segundo
     sleep(1);
     
     // Envia mensagem 2 (Código)
-    $res2 = sendWhatsappMessage($phone, $msg2, $sendUrl, $headers);
+    $res2 = sendWhatsappMessage($phone, $msg2, $headers);
     
     if ($res2['status'] === 200 || $res2['status'] === 201) {
         // Espera 0.7 segundos
         usleep(700000);
         
         // Envia mensagem 3
-        $res3 = sendWhatsappMessage($phone, $msg3, $sendUrl, $headers);
+        $res3 = sendWhatsappMessage($phone, $msg3, $headers);
         
         if ($res3['status'] === 200 || $res3['status'] === 201) {
             echo json_encode(['success' => true, 'message' => 'Link de acesso enviado com sucesso para o seu WhatsApp!']);

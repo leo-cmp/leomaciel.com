@@ -24,14 +24,17 @@ if (file_exists(__DIR__ . '/.env')) {
     }
 }
 
-// URL base da sua API do WhatsApp (Evolution API)
-define('EVOLUTION_API_URL', getenv('EVOLUTION_API_URL') ?: 'https://evo2.studiopro.com.br');
+// URL base da sua API do WhatsApp (Evolution API / Evolution Go)
+define('EVOLUTION_API_URL', getenv('EVOLUTION_API_URL') ?: 'https://whats.api.dizit.app');
 
-// Chave global da API (apikey)
+// Chave da API / Token da Instância na Evolution Go (apikey)
 define('EVOLUTION_API_KEY', getenv('EVOLUTION_API_KEY') ?: '');
 
-// Nome da Instância do WhatsApp criada na Evolution API
+// Nome da Instância do WhatsApp criada na Evolution API (opcional na Evolution Go, obrigatório na v2)
 define('EVOLUTION_INSTANCE', getenv('EVOLUTION_INSTANCE') ?: 'LeoMaciel');
+
+// Tipo de API: 'go' (Evolution Go - whatsmeow) ou 'v2' (Evolution API v2 - Node)
+define('EVOLUTION_API_TYPE', getenv('EVOLUTION_API_TYPE') ?: 'go');
 
 // Código mestre fixo para acesso administrativo e impressão de PDF limpo
 define('MASTER_CODE', getenv('MASTER_CODE') ?: '130490');
